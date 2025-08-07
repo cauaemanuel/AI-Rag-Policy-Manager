@@ -28,7 +28,13 @@ public class RagConsumerDocument implements CommandLineRunner {
     @Override
     public void run(String... args) {
         TikaDocumentReader reader = new TikaDocumentReader(resource);
-        TextSplitter textSplitter = new TokenTextSplitter();
+        TextSplitter textSplitter = new TokenTextSplitter(
+                300,
+                500,
+                100,
+                1000,
+                true
+        );
         log.info("Ingesting PDF file");
         vectorStore.accept(textSplitter.split(reader.read()));
         log.info("Completed Ingesting PDF file");

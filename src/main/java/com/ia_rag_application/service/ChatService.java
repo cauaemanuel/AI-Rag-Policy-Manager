@@ -6,6 +6,7 @@ import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvi
 import org.springframework.ai.chat.prompt.Prompt;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.ollama.OllamaChatModel;
+import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.stereotype.Service;
 
@@ -36,16 +37,22 @@ public class ChatService {
     }
 
     public String chatRagTwo(String query) {
-        var context = getContextByDocuments(Objects.requireNonNull(vectorStore.similaritySearch(query)), query);
-        log.info("Context for RAG: {}", context);
+        var search = SearchRequest
+                .builder()
+                .topK(3)
+                .query(query)
+                .build();
+        var docs = vectorStore.similaritySearch(search);
+        var prompt = createPrompt(Objects.requireNonNull(docs), query);
+        log.info("Context for RAG: {}", prompt);
         return ChatClient.builder(ollamaChatModel)
                 .build().prompt()
-                .user(context)
+                .user(prompt)
                 .call()
                 .content();
     }
 
-    public String getContextByDocuments(List<Document> docs, String query){
+    public String createPrompt(List<Document> docs, String query){
         StringBuilder context = new StringBuilder();
         context.append("Query: ").append(query).append("\n");
         context.append("Context: \n");
